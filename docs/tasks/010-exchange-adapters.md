@@ -1,5 +1,8 @@
 # Task 010 — Exchange adapters (Bybit, OKX)
 
+## Status
+Done — 2026-01-31
+
 ## Goal
 Fetch order book snapshots from Bybit and OKX and normalize into OrderBook.
 
