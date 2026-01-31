@@ -11,3 +11,4 @@
 /.idea/
 *.egg-info/
 __pycache__/
+__scratches__/
