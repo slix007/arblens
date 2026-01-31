@@ -1,0 +1,47 @@
+2) Week 1 план на 8 часов (таймбоксы)
+
+Цель Week 1: вертикальный срез “получили top-of-book → нормализовали → вывели CLI report” (без БД).
+
+0:00–1:00 (1ч) — Product/Tech контракт (ты)
+•	Зафиксировать в docs/tasks/010-exchange-adapters.md:
+•	какие пары поддерживаем (BTC/USDT, ETH/USDT)
+•	какой depth (по умолчанию 20)
+•	что считаем “валидным order book” (bids/asks не пустые? допускаем пустые?)
+•	Создать docs/decisions/0001-rest-polling-first.md (ниже готовый)
+
+1:00–2:00 (1ч) — Домен + интерфейсы (ты)
+•	domain/models.py (уже есть) — добавить при желании:
+•	инварианты (например bids убывают, asks возрастают) — не обязательно
+•	exchanges/base.py + exchanges/errors.py (можешь сам или отдать AI)
+
+2:00–4:30 (2.5ч) — Реализация адаптеров (AI + ты в роли ревью)
+•	Отдаешь Task 010 в Codex/Claude
+•	Получаешь набор файлов
+•	Быстро прогоняешь:
+•	uv run ruff check .
+•	uv run mypy src
+•	uv run pytest
+
+4:30–5:30 (1ч) — Тесты и фикстуры (ты + AI)
+•	Доделать тесты так, чтобы ловили типичные баги:
+•	строки → float
+•	порядок bids/asks
+•	timestamp tz-aware UTC
+•	не падаем на пустом уровне/некорректном числе (а кидаем ExchangeParseError)
+
+5:30–7:00 (1.5ч) — CLI report (AI можно)
+•	В cli/main.py добавить команду:
+•	report --symbol BTC/USDT --depth 20
+•	печать:
+•	bybit best_bid/best_ask
+•	okx best_bid/best_ask
+•	raw spread между venues
+•	Параллелизация: asyncio.gather (но с обработкой ошибок)
+
+7:00–8:00 (1ч) — Полировка “как продукт” (ты)
+•	README: как запустить
+•	docs/tasks/000-project-setup.md и 010-exchange-adapters.md обновить статусом
+•	Коммит(ы) маленькие и понятные
+
+Готовность Week 1:
+•	uv run python -m arblens.cli.main report --symbol BTC/USDT работает и показывает котировки с двух бирж (или хотя бы парсинг + мок/fixture, если не хочешь сетевой вызов пока).

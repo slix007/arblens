@@ -1,0 +1,6 @@
+ADR notes for future documentation:
+Я бы точно записал:
+	1.	REST polling first (уже сделали)
+	2.	Domain model & adapter interface (почему такой контракт, почему strict typing)
+	3.	SQLite/duckdb vs Postgres (когда появится storage)
+	4.	Opportunity definition (какие метрики считаем, что non-goal)
