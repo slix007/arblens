@@ -1,35 +1,32 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-- `src/arblens/` holds the core package in a `src/` layout. Key areas: `cli/` for the Typer CLI, `domain/` for models/contracts, `exchanges/` for exchange adapters, and `pipeline/`, `storage/`, `analytics/` for processing modules.
-- `tests/` is split into `tests/unit/` and `tests/integration/` (currently empty).
-- `docs/` contains decisions and milestones.
-- Top-level `main.py` is a convenience entry point; prefer `src/arblens/cli/main.py` for CLI changes.
+## AI Usage Guidelines
+- AI tools are implementation assistants; humans own architecture and product decisions.
+- Follow existing domain models, interfaces, and file layout.
+- Use strict typing (mypy) and add focused unit tests for new logic.
+- Avoid introducing new dependencies unless explicitly requested.
+- Treat `docs/tasks/*` (scope, acceptance criteria) and `docs/decisions/*` (trade-offs) as sources of truth.
+- Implement changes according to the relevant task’s acceptance criteria.
 
-## Build, Test, and Development Commands
-This project uses `uv` with a `src/` layout. Run commands from the repo root.
-- `uv sync --dev`: install dev dependencies from `uv.lock`.
-- `PYTHONPATH=src uv run python -m arblens.cli.main <command>`: run the CLI without packaging.
-- `uv run pytest`: run the test suite.
-- `uv run ruff check .`: lint.
-- `uv run ruff format .`: format.
-- `uv run mypy src`: type-check (strict config).
+## Canonical Development Commands (Makefile)
+- Install dependencies: `make install` (or `uv sync`)
+- Run full checks: `make check` (lint + typecheck + tests)
+- Auto-format code: `make fmt`
+- Single steps: `make test`, `make lint`, `make typecheck`
 
-## Coding Style & Naming Conventions
-- Python 3.11+; 4-space indentation.
-- Follow Ruff defaults with line length 100 (see `pyproject.toml`).
-- Use `snake_case` for functions/variables, `PascalCase` for classes, `UPPER_CASE` for constants.
-- Keep public APIs in `src/arblens/__init__.py` or module `__init__.py` files.
+## Running the CLI
 
-## Testing Guidelines
-- Frameworks: `pytest`, `pytest-asyncio`.
-- Place unit tests in `tests/unit/` and integration tests in `tests/integration/`.
-- Name files `test_*.py` and tests `test_*`.
-- No explicit coverage requirement yet; add focused tests for new logic and CLI commands.
+Preferred (package installed in editable mode):
+```bash
+uv pip install -e .
+uv run python -m arblens.cli.main report --help
+```
+Fallback (without packaging):
+```bash
+PYTHONPATH=src uv run python -m arblens.cli.main report --help
+```
 
-## Commit & Pull Request Guidelines
-- Current history uses short, sentence-style commit subjects (e.g., "Initial project setup ..."). Keep subjects concise and descriptive.
-- PRs should include: a clear description, testing notes (commands + results), and any doc updates in `docs/` when behavior changes.
-
-## Agent-Specific Notes
-- The repo uses a `src/` layout; ensure `PYTHONPATH=src` or packaging is configured before running modules with `-m`.
+## Project Structure (Quick)
+•	src/arblens/ — core package (src layout); main areas: cli/, domain/, exchanges/, analytics/, pipeline/, storage/.
+•	tests/ — unit and integration tests.
+•	docs/ — tasks (docs/tasks/*) and architectural decisions (docs/decisions/*).
