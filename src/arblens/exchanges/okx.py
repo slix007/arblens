@@ -26,15 +26,15 @@ def _parse_levels(raw_levels: Iterable[Iterable[Any]]) -> list[OrderBookLevel]:
     for raw_level in raw_levels:
         items = list(raw_level)
         if len(items) < 2:
-            continue
+            raise ExchangeParseError("OKX level missing price/size")
         try:
             price = float(Decimal(str(items[0])))
             size = float(Decimal(str(items[1])))
         except (InvalidOperation, ValueError, TypeError):
-            continue
-        # Skip invalid/zero levels to keep snapshots usable.
+            raise ExchangeParseError("OKX level has invalid price/size")
+        # Reject invalid/zero levels to avoid corrupt snapshots.
         if price <= 0 or size <= 0:
-            continue
+            raise ExchangeParseError("OKX level has non-positive price/size")
         levels.append(OrderBookLevel(price=price, size=size))
     return levels
 
@@ -60,18 +60,22 @@ def parse_okx_order_book(payload: dict[str, Any], symbol: str) -> OrderBook:
     if not isinstance(raw_bids, list) or not isinstance(raw_asks, list):
         raise ExchangeParseError("OKX payload missing bids/asks arrays")
 
+    if not raw_bids:
+        raise ExchangeParseError("OKX payload has empty bids list")
+    if not raw_asks:
+        raise ExchangeParseError("OKX payload has empty asks list")
+
     bids = sorted(_parse_levels(raw_bids), key=lambda level: level.price, reverse=True)
     asks = sorted(_parse_levels(raw_asks), key=lambda level: level.price)
 
     timestamp_value = book.get("ts")
     if timestamp_value is None:
-        timestamp = datetime.now(UTC)
-    else:
-        try:
-            timestamp_ms = int(timestamp_value)
-        except (ValueError, TypeError) as exc:
-            raise ExchangeParseError("OKX payload has invalid timestamp") from exc
-        timestamp = datetime.fromtimestamp(timestamp_ms / 1000, tz=UTC)
+        raise ExchangeParseError("OKX payload missing timestamp")
+    try:
+        timestamp_ms = int(timestamp_value)
+    except (ValueError, TypeError) as exc:
+        raise ExchangeParseError("OKX payload has invalid timestamp") from exc
+    timestamp = datetime.fromtimestamp(timestamp_ms / 1000, tz=UTC)
 
     return OrderBook(
         bids=bids,
