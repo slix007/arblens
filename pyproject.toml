@@ -26,7 +26,8 @@ asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+indent-width = 4
+
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]

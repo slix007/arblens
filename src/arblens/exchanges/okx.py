@@ -30,8 +30,8 @@ def _parse_levels(raw_levels: Iterable[Iterable[Any]]) -> list[OrderBookLevel]:
         try:
             price = float(Decimal(str(items[0])))
             size = float(Decimal(str(items[1])))
-        except (InvalidOperation, ValueError, TypeError):
-            raise ExchangeParseError("OKX level has invalid price/size")
+        except (InvalidOperation, ValueError, TypeError) as exc:
+            raise ExchangeParseError("OKX level has invalid price/size") from exc
         # Reject invalid/zero levels to avoid corrupt snapshots.
         if price <= 0 or size <= 0:
             raise ExchangeParseError("OKX level has non-positive price/size")
