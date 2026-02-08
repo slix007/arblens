@@ -55,3 +55,12 @@ Fetch order book snapshots from Bybit and OKX and normalize into OrderBook.
 - Empty book → empty lists
 - Invalid/zero levels → skip silently
 - Missing timestamp → fallback to `datetime.now(UTC)`
+
+## Contract / Assumptions
+
+### Order book depth
+- Default depth: 20 levels.
+- Depth is configurable via `fetch_order_book(symbol, depth)`.
+- If the exchange returns fewer levels, use what is available.
+- Depth must be a positive integer.
+- Invalid depth values result in a client-side error.
