@@ -14,16 +14,12 @@
 - Auto-format code: `make fmt`
 - Single steps: `make test`, `make lint`, `make typecheck`
 
-## Running the CLI
-
-Preferred (package installed in editable mode):
+## Python Environment Setup
 ```bash
-uv pip install -e .
-uv run python -m arblens.cli.main report --help
-```
-Fallback (without packaging):
-```bash
-PYTHONPATH=src uv run python -m arblens.cli.main report --help
+python3.11 -m venv .venv
+source .venv/bin/activate
+make install
+make check
 ```
 
 ## Project Structure (Quick)
