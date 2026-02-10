@@ -1,4 +1,5 @@
 import asyncio
+from enum import StrEnum
 
 import typer
 
@@ -6,8 +7,10 @@ from arblens.domain.models import OrderBook
 from arblens.exchanges.bybit import BybitClient
 from arblens.exchanges.okx import OkxClient
 
-ExchangeFirst = "bybit"
-ExchangeSecond = "okx"
+
+class Exchange(StrEnum):
+    BYBIT = "bybit"
+    OKX = "okx"
 
 app = typer.Typer(help="Arblens CLI")
 
@@ -18,7 +21,7 @@ def callback() -> None:
 
 @app.command()
 def report(symbol: str = "BTC/USDT", depth: int = 20) -> None:
-    async def _fetch_books() -> dict[str, OrderBook | BaseException]:
+    async def _fetch_books() -> dict[Exchange, OrderBook | BaseException]:
         bybit = BybitClient()
         okx = OkxClient()
         results = await asyncio.gather(
@@ -26,13 +29,13 @@ def report(symbol: str = "BTC/USDT", depth: int = 20) -> None:
             okx.fetch_order_book(symbol, depth),
             return_exceptions=True,
         )
-        return {ExchangeFirst: results[0], ExchangeSecond: results[1]}
+        return {Exchange.BYBIT: results[0], Exchange.OKX: results[1]}
 
     books = asyncio.run(_fetch_books())
 
     typer.echo(f"Report for {symbol} (depth={depth})")
 
-    best_prices: dict[str, tuple[float | None, float | None]] = {}
+    best_prices: dict[Exchange, tuple[float | None, float | None]] = {}
     for venue, result in books.items():
         if isinstance(result, BaseException):
             typer.echo(f"{venue}: error: {result}")
@@ -44,8 +47,8 @@ def report(symbol: str = "BTC/USDT", depth: int = 20) -> None:
         best_prices[venue] = (best_bid, best_ask)
         typer.echo(f"{venue}: best_bid={best_bid} best_ask={best_ask}")
 
-    first_bid, first_ask = best_prices.get(ExchangeFirst, (None, None))
-    second_bid, second_ask = best_prices.get(ExchangeSecond, (None, None))
+    first_bid, first_ask = best_prices.get(Exchange.BYBIT, (None, None))
+    second_bid, second_ask = best_prices.get(Exchange.OKX, (None, None))
 
     # Sell on first (hit bid) and buy on second (lift ask)
     if first_bid is not None and second_ask is not None:
