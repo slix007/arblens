@@ -1,0 +1,144 @@
+Week 2 — План по таймбоксам
+
+⸻
+
+0:00–1:00 (1ч) — Контракт метрик (ты)
+
+Создать новый task:
+docs/tasks/020-spread-and-slippage.md
+Зафиксировать:
+
+Термины
+	•	firstSell, secondBuy
+	•	spreadSell = firstSell - secondBuy
+	•	spreadBuy = secondSell - firstBuy
+
+Новые метрики
+	•	gross_spread
+	•	effective_price_for_size
+	•	net_spread
+	•	capacity
+
+Допущения
+	•	taker fees only
+	•	no transfer delay
+	•	no funding impact
+	•	no partial execution logic
+
+👉 Это важный Staff-момент:
+метрики = контракт аналитики
+
+⸻
+
+1:00–2:00 (1ч) — Архитектурный рефакторинг (ты)
+
+Сейчас spread считается в CLI. Это неправильно.
+
+Создать:
+analytics/
+    spread.py
+    slippage.py
+
+Перенести:
+	•	spread-логику
+	•	best price extraction
+
+CLI должен:
+	•	вызывать аналитику
+	•	не считать ничего сам
+
+⸻
+
+2:00–4:00 (2ч) — Slippage model (AI + ты)
+
+Реализовать в slippage.py
+
+Функция:
+def effective_price(levels: Sequence[OrderBookLevel], size: float) -> float
+Логика:
+	•	walk the book
+	•	accumulate size
+	•	weighted average price
+	•	если ликвидности не хватает → ошибка или partial flag (зафиксировать в контракте)
+
+Это уже реальный infra-thinking.
+
+⸻
+
+4:00–5:00 (1ч) — Fees model
+
+Создать:
+analytics/fees.py
+Простой контракт:
+@dataclass
+class FeeSchedule:
+    taker: float  # e.g. 0.001 = 0.1%
+Функция:
+    def apply_fee(price: float, fee: float, side: Literal["buy", "sell"]) -> float
+
+Допущение:
+	•	fee applied multiplicatively
+	•	buy → price * (1 + fee)
+	•	sell → price * (1 - fee)
+
+⸻
+
+5:00–6:00 (1ч) — Net spread calculation
+
+В analytics/spread.py:
+def compute_net_spread(
+    first_book: OrderBook,
+    second_book: OrderBook,
+    size: float,
+    first_fee: float,
+    second_fee: float,
+) -> SpreadResult:
+Где SpreadResult — dataclass:
+@dataclass
+class SpreadResult:
+    gross_spread: float
+    net_spread: float
+    capacity: float
+
+CLI теперь должен печатать:
+gross_spread: ...
+net_spread: ...
+capacity: ...
+
+6:00–7:00 (1ч) — Тесты аналитики (важно)
+
+Добавить unit tests:
+	•	slippage weighted average correct
+	•	insufficient liquidity
+	•	fee applied correctly
+	•	net spread decreases after fees
+
+Это уже чистые функции → идеальные тесты.
+
+⸻
+
+7:00–8:00 (1ч) — Product polish
+
+Обновить:
+	•	README — добавить “net spread example”
+	•	Task 020 → статус
+	•	Возможно ADR:
+	docs/decisions/0002-fees-and-slippage-model.md
+
+Короткий:
+	•	taker-only
+	•	no funding
+	•	no transfer latency
+
+⸻
+
+🎯 Готовность Week 2
+
+CLI теперь:
+uv run python -m arblens.cli.main report --size 1000
+gross_spread
+net_spread (after fees)
+capacity
+
+Ты больше не просто сравниваешь bid/ask.
+Ты делаешь realistic arbitrage feasibility check.
