@@ -84,10 +84,12 @@ For a fee `f`:
 
 No maker fees.
 No dynamic tier logic (yet).
+Taker fee rates provided by hardcoded value for particular symbol/venue.
+Examples: 0.00055 (0.055%) for Bybit, 0.001 (0.1%) for OKX.
 
 ---
 
-### Net Spread Definition
+### Gross and Net Spread Definition
 
 For a given size:
 
@@ -98,7 +100,7 @@ For a given size:
    net_spread = gross_spread - fees_impact
 
 Alternatively:
-Net spread can be computed directly using fee-adjusted effective prices.
+Net spread can be computed directly using fee-adjusted effective prices. Out of scope for this task.
 
 ---
 
