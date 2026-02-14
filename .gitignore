@@ -9,7 +9,9 @@
 /dataSources/
 /dataSources.local.xml
 /.idea/
+# Python-related ignored files
 *.egg-info/
 __pycache__/
+# Agent-skills-related ignored files
 __scratches__/
 .agents/
