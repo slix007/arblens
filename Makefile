@@ -30,3 +30,6 @@ fmt:
 
 cli:
 	uv run python -m arblens.cli.main report --help
+
+cli-btc:
+	uv run python -m arblens.cli.main report

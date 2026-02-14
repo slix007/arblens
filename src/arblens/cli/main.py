@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import dataclass
 from enum import StrEnum
 
 import typer
@@ -12,24 +13,35 @@ class Exchange(StrEnum):
     BYBIT = "bybit"
     OKX = "okx"
 
+
+@dataclass(frozen=True)
+class VenuePair:
+    left: Exchange
+    right: Exchange
+
+
 app = typer.Typer(help="Arblens CLI")
+
 
 @app.callback()
 def callback() -> None:
     """Arblens CLI for arbitrage analysis."""
     pass
 
+
 @app.command()
 def report(symbol: str = "BTC/USDT", depth: int = 20) -> None:
+    pair = VenuePair(Exchange.BYBIT, Exchange.OKX)
+
     async def _fetch_books() -> dict[Exchange, OrderBook | BaseException]:
         bybit = BybitClient()
         okx = OkxClient()
-        results = await asyncio.gather(
-            bybit.fetch_order_book(symbol, depth),
-            okx.fetch_order_book(symbol, depth),
-            return_exceptions=True,
-        )
-        return {Exchange.BYBIT: results[0], Exchange.OKX: results[1]}
+        requests = {
+            pair.left: bybit.fetch_order_book(symbol, depth),
+            pair.right: okx.fetch_order_book(symbol, depth),
+        }
+        results = await asyncio.gather(*requests.values(), return_exceptions=True)
+        return dict(zip(requests.keys(), results, strict=True))
 
     books = asyncio.run(_fetch_books())
 
@@ -47,22 +59,18 @@ def report(symbol: str = "BTC/USDT", depth: int = 20) -> None:
         best_prices[venue] = (best_bid, best_ask)
         typer.echo(f"{venue}: best_bid={best_bid} best_ask={best_ask}")
 
-    first_bid, first_ask = best_prices.get(Exchange.BYBIT, (None, None))
-    second_bid, second_ask = best_prices.get(Exchange.OKX, (None, None))
+    left_bid, left_ask = best_prices.get(pair.left, (None, None))
+    right_bid, right_ask = best_prices.get(pair.right, (None, None))
 
     # Sell on first (hit bid) and buy on second (lift ask)
-    if first_bid is not None and second_ask is not None:
-        spread_sell = first_bid - second_ask
-        typer.echo(
-            f"spreadSell (firstSell - secondBuy): {spread_sell}"
-        )
+    if left_bid is not None and right_ask is not None:
+        spread_sell = left_bid - right_ask
+        typer.echo(f"spreadSell (leftSell - rightBuy): {spread_sell}")
 
     # Buy on first (lift ask) and sell on second (hit bid)
-    if first_ask is not None and second_bid is not None:
-        spread_buy = second_bid - first_ask
-        typer.echo(
-            f"spreadBuy (secondSell - firstBuy): {spread_buy}"
-        )
+    if left_ask is not None and right_bid is not None:
+        spread_buy = right_bid - left_ask
+        typer.echo(f"spreadBuy (rightSell - leftBuy): {spread_buy}")
 
 
 if __name__ == "__main__":
