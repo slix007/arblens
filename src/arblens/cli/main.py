@@ -1,24 +1,12 @@
 import asyncio
-from dataclasses import dataclass
-from enum import StrEnum
 
 import typer
 
+from arblens.analytics.spread import calc_pair_spreads, extract_best_prices
 from arblens.domain.models import OrderBook
+from arblens.domain.models.exchange import Exchange, VenuePair
 from arblens.exchanges.bybit import BybitClient
 from arblens.exchanges.okx import OkxClient
-
-
-class Exchange(StrEnum):
-    BYBIT = "bybit"
-    OKX = "okx"
-
-
-@dataclass(frozen=True)
-class VenuePair:
-    left: Exchange
-    right: Exchange
-
 
 app = typer.Typer(help="Arblens CLI")
 
@@ -54,23 +42,21 @@ def report(symbol: str = "BTC/USDT", depth: int = 20) -> None:
             best_prices[venue] = (None, None)
             continue
 
-        best_bid = result.bids[0].price if result.bids else None
-        best_ask = result.asks[0].price if result.asks else None
+        best_bid, best_ask = extract_best_prices(result)
         best_prices[venue] = (best_bid, best_ask)
         typer.echo(f"{venue}: best_bid={best_bid} best_ask={best_ask}")
 
-    left_bid, left_ask = best_prices.get(pair.left, (None, None))
-    right_bid, right_ask = best_prices.get(pair.right, (None, None))
+    # left_bid, left_ask = best_prices.get(pair.left, (None, None))
+    # right_bid, right_ask = best_prices.get(pair.right, (None, None))
+    spreads = calc_pair_spreads(best_prices[Exchange.BYBIT], best_prices[Exchange.OKX])
 
     # Sell on first (hit bid) and buy on second (lift ask)
-    if left_bid is not None and right_ask is not None:
-        spread_sell = left_bid - right_ask
-        typer.echo(f"spreadSell (leftSell - rightBuy): {spread_sell}")
+    if spreads.spread_sell is not None:
+        typer.echo(f"spreadSell (leftSell - rightBuy): {spreads.spread_sell}")
 
     # Buy on first (lift ask) and sell on second (hit bid)
-    if left_ask is not None and right_bid is not None:
-        spread_buy = right_bid - left_ask
-        typer.echo(f"spreadBuy (rightSell - leftBuy): {spread_buy}")
+    if spreads.spread_buy is not None:
+        typer.echo(f"spreadBuy (rightSell - leftBuy): {spreads.spread_buy}")
 
 
 if __name__ == "__main__":
