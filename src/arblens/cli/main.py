@@ -2,7 +2,7 @@ import asyncio
 
 import typer
 
-from arblens.analytics.spread import calc_pair_spreads, extract_best_prices
+from arblens.analytics import calc_pair_spreads, extract_best_prices
 from arblens.domain.models import OrderBook
 from arblens.domain.models.exchange import Exchange, VenuePair
 from arblens.exchanges.bybit import BybitClient
@@ -46,8 +46,6 @@ def report(symbol: str = "BTC/USDT", depth: int = 20) -> None:
         best_prices[venue] = (best_bid, best_ask)
         typer.echo(f"{venue}: best_bid={best_bid} best_ask={best_ask}")
 
-    # left_bid, left_ask = best_prices.get(pair.left, (None, None))
-    # right_bid, right_ask = best_prices.get(pair.right, (None, None))
     spreads = calc_pair_spreads(best_prices[Exchange.BYBIT], best_prices[Exchange.OKX])
 
     # Sell on first (hit bid) and buy on second (lift ask)
