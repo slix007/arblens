@@ -8,6 +8,7 @@ from typing import Any
 import httpx
 
 from arblens.domain.models import OrderBook, OrderBookLevel
+from arblens.domain.models.exchange import Exchange
 from arblens.exchanges.base import ExchangeClient
 from arblens.exchanges.errors import (
     ExchangeError,
@@ -87,7 +88,7 @@ def parse_okx_order_book(payload: dict[str, Any], symbol: str) -> OrderBook:
 
 
 class OkxClient(ExchangeClient):
-    venue = "okx"
+    venue = Exchange.OKX
 
     async def fetch_order_book(self, symbol: str, depth: int) -> OrderBook:
         exchange_sym = exchange_symbol(self.venue, symbol)

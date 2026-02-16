@@ -8,11 +8,6 @@ class Exchange(StrEnum):
 
 
 @dataclass(frozen=True)
-class VenuePair:
-    left: Exchange
-    right: Exchange
-
-@dataclass(frozen=True)
 class PairSpread:
     spread_sell: float | None
     spread_buy: float | None

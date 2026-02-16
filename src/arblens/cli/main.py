@@ -4,9 +4,10 @@ import typer
 
 from arblens.analytics import calc_pair_spreads, extract_best_prices
 from arblens.domain.models import OrderBook
-from arblens.domain.models.exchange import Exchange, VenuePair
+from arblens.domain.models.exchange import Exchange
 from arblens.exchanges.bybit import BybitClient
 from arblens.exchanges.okx import OkxClient
+from arblens.exchanges.pair import ExchangePair
 
 app = typer.Typer(help="Arblens CLI")
 
@@ -19,14 +20,12 @@ def callback() -> None:
 
 @app.command()
 def report(symbol: str = "BTC/USDT", depth: int = 20) -> None:
-    pair = VenuePair(Exchange.BYBIT, Exchange.OKX)
+    pair = ExchangePair(BybitClient(), OkxClient())
 
     async def _fetch_books() -> dict[Exchange, OrderBook | BaseException]:
-        bybit = BybitClient()
-        okx = OkxClient()
         requests = {
-            pair.left: bybit.fetch_order_book(symbol, depth),
-            pair.right: okx.fetch_order_book(symbol, depth),
+            pair.left.venue: pair.left.fetch_order_book(symbol, depth),
+            pair.right.venue: pair.right.fetch_order_book(symbol, depth),
         }
         results = await asyncio.gather(*requests.values(), return_exceptions=True)
         return dict(zip(requests.keys(), results, strict=True))
@@ -46,7 +45,10 @@ def report(symbol: str = "BTC/USDT", depth: int = 20) -> None:
         best_prices[venue] = (best_bid, best_ask)
         typer.echo(f"{venue}: best_bid={best_bid} best_ask={best_ask}")
 
-    spreads = calc_pair_spreads(best_prices[Exchange.BYBIT], best_prices[Exchange.OKX])
+    spreads = calc_pair_spreads(
+        best_prices[pair.left.venue],
+        best_prices[pair.right.venue],
+    )
 
     # Sell on first (hit bid) and buy on second (lift ask)
     if spreads.spread_sell is not None:
